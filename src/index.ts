@@ -1,5 +1,5 @@
 import { McpAgent } from "agents/mcp";
-import { McpServer } from "@modelcontextprotocol/sdk";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 /**
@@ -9,9 +9,9 @@ import { z } from "zod";
  * used by MCP clients like Claude, Cursor, or AI Playground.
  */
 export class MyMCP extends McpAgent {
-  server = new McpServer({ 
+  server = new McpServer({
     name: "AutoRAG MCP Server", 
-    version: "1.0.0" 
+    version: "1.0.0"
   });
 
   async init() {
@@ -169,14 +169,14 @@ export class MyMCP extends McpAgent {
 // Export the default fetch handler for the worker
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
     
-    if (pathname.startsWith('/sse')) {
-      return MyMCP.serveSSE('/sse').fetch(request, env, ctx);
+    if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+      return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
     }
     
-    if (pathname.startsWith('/mcp')) {
-      return MyMCP.serve('/mcp').fetch(request, env, ctx);
+    if (url.pathname === "/mcp") {
+      return MyMCP.serve("/mcp").fetch(request, env, ctx);
     }
     
     // Handle case where no path matches
