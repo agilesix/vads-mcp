@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "remote-autorag": {
+    "vads-autorag-mcp": {
       "command": "npx",
       "args": [
         "-y", 
