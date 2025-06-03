@@ -21,9 +21,9 @@ export class MyMCP extends McpAgent {
       { 
         autoragId: z.string().describe("The name of the AutoRAG instance (e.g., 'vads-rag-mcp')"),
         query: z.string().describe("The search query"),
-        useAISearch: z.boolean().optional().describe("Use AI Search (with response generation) or basic search. Default: true")
+        useAISearch: z.boolean().optional().describe("Use AI Search (with response generation) or basic search. Default: false")
       },
-      async ({ autoragId, query, useAISearch = true }) => {
+      async ({ autoragId, query, useAISearch = false }) => {
         try {
           const endpoint = useAISearch ? 'ai-search' : 'search';
           const response = await fetch(
@@ -85,67 +85,11 @@ export class MyMCP extends McpAgent {
       }
     );
     
-    // Convenience tool to search your specific AutoRAG "vads-rag-mcp" with AI generation
+    // Convenience tool to search your specific AutoRAG "vads-rag-mcp" with basic search
     this.server.tool(
       "searchVADSRAG",
       { 
         query: z.string().describe("The search query for VA-related documents") 
-      },
-      async ({ query }) => {
-        try {
-          const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/vads-rag-mcp/ai-search`,
-            {
-              method: "POST",
-              headers: {
-                'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                query,
-                rewrite_query: true,
-                max_num_results: 10,
-                ranking_options: {
-                  score_threshold: 0.3
-                }
-              }),
-            }
-          );
-          
-          const data = await response.json();
-          
-          if (!data.success) {
-            return {
-              content: [{ 
-                type: "text", 
-                text: `Error searching VADS AutoRAG: ${data.errors?.[0]?.message || 'Unknown error'}` 
-              }],
-            };
-          }
-          
-          // Format the response with the AI-generated answer
-          return {
-            content: [{ 
-              type: "text", 
-              text: `**AI Response:**\n${data.result.response}\n\n**Source Documents:**\n${JSON.stringify(data.result.data, null, 2)}` 
-            }],
-          };
-        } catch (error) {
-          return {
-            content: [{ 
-              type: "text", 
-              text: `Error: ${error.message}` 
-            }],
-          };
-        }
-      }
-    );
-
-    // Tool to get basic search results from VADS RAG (documents only, no AI generation)
-    this.server.tool(
-      "searchVADSRAGBasic",
-      { 
-        query: z.string().describe("The search query for VA-related documents (returns documents only, no AI response)") 
       },
       async ({ query }) => {
         try {
@@ -179,6 +123,7 @@ export class MyMCP extends McpAgent {
             };
           }
           
+          // Return just the document results
           return {
             content: [{ 
               type: "text", 
