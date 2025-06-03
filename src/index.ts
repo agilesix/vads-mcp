@@ -15,76 +15,33 @@ export class MyMCP extends McpAgent {
   });
 
   async init() {
-    // Tool to list all AutoRAG instances in your account
-    this.server.tool(
-      "listAutoRAGs",
-      {},
-      async () => {
-        try {
-          const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/ai/autorag`,
-            {
-              headers: {
-                'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-          
-          const data = await response.json();
-          
-          if (!data.success) {
-            return {
-              content: [{ 
-                type: "text", 
-                text: `Error retrieving AutoRAG instances: ${data.errors[0].message}` 
-              }],
-            };
-          }
-          
-          // Format the response
-          const formattedResponse = data.result.map(rag => ({
-            id: rag.id,
-            name: rag.name,
-            status: rag.status,
-            createdAt: rag.created_at
-          }));
-          
-          return {
-            content: [{ 
-              type: "text", 
-              text: JSON.stringify(formattedResponse, null, 2) 
-            }],
-          };
-        } catch (error) {
-          return {
-            content: [{ 
-              type: "text", 
-              text: `Error: ${error.message}` 
-            }],
-          };
-        }
-      }
-    );
-    
-    // Tool to search documents in a specific AutoRAG
+    // Tool to search documents in a specific AutoRAG using AI Search
     this.server.tool(
       "searchAutoRAG",
       { 
-        autoragId: z.string().describe("The ID of the AutoRAG instance"),
-        query: z.string().describe("The search query") 
+        autoragId: z.string().describe("The name of the AutoRAG instance (e.g., 'vads-rag-mcp')"),
+        query: z.string().describe("The search query"),
+        useAISearch: z.boolean().optional().describe("Use AI Search (with response generation) or basic search. Default: true")
       },
-      async ({ autoragId, query }) => {
+      async ({ autoragId, query, useAISearch = true }) => {
         try {
+          const endpoint = useAISearch ? 'ai-search' : 'search';
           const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/ai/autorag/${autoragId}/search`,
+            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/${autoragId}/${endpoint}`,
             {
               method: "POST",
               headers: {
                 'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ query }),
+              body: JSON.stringify({ 
+                query,
+                rewrite_query: true,
+                max_num_results: 10,
+                ranking_options: {
+                  score_threshold: 0.3
+                }
+              }),
             }
           );
           
@@ -94,17 +51,29 @@ export class MyMCP extends McpAgent {
             return {
               content: [{ 
                 type: "text", 
-                text: `Error searching AutoRAG: ${data.errors[0].message}` 
+                text: `Error searching AutoRAG "${autoragId}": ${data.errors?.[0]?.message || 'Unknown error'}` 
               }],
             };
           }
           
-          return {
-            content: [{ 
-              type: "text", 
-              text: JSON.stringify(data.result, null, 2) 
-            }],
-          };
+          // Format the response nicely
+          if (useAISearch && data.result.response) {
+            // AI Search includes generated response
+            return {
+              content: [{ 
+                type: "text", 
+                text: `**AI Response:**\n${data.result.response}\n\n**Source Documents:**\n${JSON.stringify(data.result.data, null, 2)}` 
+              }],
+            };
+          } else {
+            // Basic search returns just the matching documents
+            return {
+              content: [{ 
+                type: "text", 
+                text: JSON.stringify(data.result, null, 2) 
+              }],
+            };
+          }
         } catch (error) {
           return {
             content: [{ 
@@ -116,23 +85,30 @@ export class MyMCP extends McpAgent {
       }
     );
     
-    // Convenience tool to search your specific AutoRAG "vads-rag-mcp"
+    // Convenience tool to search your specific AutoRAG "vads-rag-mcp" with AI generation
     this.server.tool(
-      "searchVadsRAG",
+      "searchVADSRAG",
       { 
-        query: z.string().describe("The search query") 
+        query: z.string().describe("The search query for VA-related documents") 
       },
       async ({ query }) => {
         try {
           const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/ai/autorag/vads-rag-mcp/search`,
+            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/vads-rag-mcp/ai-search`,
             {
               method: "POST",
               headers: {
                 'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ query }),
+              body: JSON.stringify({ 
+                query,
+                rewrite_query: true,
+                max_num_results: 10,
+                ranking_options: {
+                  score_threshold: 0.3
+                }
+              }),
             }
           );
           
@@ -142,7 +118,63 @@ export class MyMCP extends McpAgent {
             return {
               content: [{ 
                 type: "text", 
-                text: `Error searching AutoRAG: ${data.errors[0].message}` 
+                text: `Error searching VADS AutoRAG: ${data.errors?.[0]?.message || 'Unknown error'}` 
+              }],
+            };
+          }
+          
+          // Format the response with the AI-generated answer
+          return {
+            content: [{ 
+              type: "text", 
+              text: `**AI Response:**\n${data.result.response}\n\n**Source Documents:**\n${JSON.stringify(data.result.data, null, 2)}` 
+            }],
+          };
+        } catch (error) {
+          return {
+            content: [{ 
+              type: "text", 
+              text: `Error: ${error.message}` 
+            }],
+          };
+        }
+      }
+    );
+
+    // Tool to get basic search results from VADS RAG (documents only, no AI generation)
+    this.server.tool(
+      "searchVADSRAGBasic",
+      { 
+        query: z.string().describe("The search query for VA-related documents (returns documents only, no AI response)") 
+      },
+      async ({ query }) => {
+        try {
+          const response = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/vads-rag-mcp/search`,
+            {
+              method: "POST",
+              headers: {
+                'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                query,
+                rewrite_query: true,
+                max_num_results: 10,
+                ranking_options: {
+                  score_threshold: 0.3
+                }
+              }),
+            }
+          );
+          
+          const data = await response.json();
+          
+          if (!data.success) {
+            return {
+              content: [{ 
+                type: "text", 
+                text: `Error searching VADS AutoRAG: ${data.errors?.[0]?.message || 'Unknown error'}` 
               }],
             };
           }
