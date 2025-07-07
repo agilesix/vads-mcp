@@ -5,7 +5,7 @@ This MCP (Model Context Protocol) server provides intelligent access to the VA D
 ## 🚀 Features
 
 - **Intelligent Design System Search**: Find VA Design System components, patterns, and guidelines using natural language
-- **Dual Search Modes**: Choose between raw document results or AI-synthesized responses
+- **Fast Document Search**: Returns raw document results with metadata for quick access to source content
 - **Flexible AutoRAG Support**: Works with any AutoRAG instance, pre-configured for VA Design System
 - **Advanced Filtering**: Control result quality and quantity with configurable parameters
 - **Comprehensive Error Handling**: Detailed troubleshooting guidance for common issues
@@ -71,7 +71,6 @@ Search the VA Design System documentation using natural language queries.
 |-----------|------|---------|-------------|
 | **query** | `string` (required) | - | Your search query about VA Design System components, accessibility guidelines, or design patterns.<br/>**Examples:** "How do I use the button component?", "What are the color accessibility requirements?", "Alert component variants" |
 | **autoragId** | `string` | `"vads-rag-mcp"` | AutoRAG instance identifier. Use `"vads-rag-mcp"` for VA Design System docs.<br/>**Other examples:** `"design-patterns-rag"`, `"accessibility-docs-rag"` |
-| **useAISearch** | `boolean` | `false` | Search mode selection:<br/>• `false` (default): Raw search results with document chunks and metadata (faster)<br/>• `true`: AI-synthesized response with citations (comprehensive but slower) |
 | **maxResults** | `number` | `10` | Maximum document chunks to retrieve (1-50).<br/>**Recommended:** 5-15 for specific questions, 20-50 for research |
 | **scoreThreshold** | `number` | `0.3` | Minimum similarity score (0.0-1.0) for results:<br/>• `0.7-1.0`: High precision, very relevant matches<br/>• `0.5-0.7`: Balanced precision and recall (recommended)<br/>• `0.3-0.5`: High recall, broader results<br/>• `0.0-0.3`: Very broad searches |
 
@@ -113,25 +112,17 @@ Ask Cursor's AI assistant to use the VA Design System search tool:
 - "JavaScript requirements for interactive components"
 - "Integration examples with React"
 
-## 🔍 Search Modes Explained
+## 🔍 Search Results
 
-### Raw Search Mode (`useAISearch: false`)
-**Best for:** Quick fact-finding, browsing source content, getting precise documentation snippets
+The `searchDesignSystem` tool returns raw search results optimized for fast access to source content:
 
 **Returns:**
 - Document chunks with similarity scores
 - Source metadata (file names, sections)
-- Direct access to original content
-- Faster response times
+- Direct access to original VA Design System content
+- Fast response times for efficient browsing
 
-### AI Search Mode (`useAISearch: true`)  
-**Best for:** Comprehensive explanations, synthesized answers, comparative analysis
-
-**Returns:**
-- AI-generated response combining multiple sources
-- Structured answers with context
-- Source citations and references
-- More comprehensive but slower
+**Best for:** Quick fact-finding, browsing source documentation, getting precise snippets, and maintaining direct access to the original VA Design System materials.
 
 ## 🚨 Troubleshooting
 
@@ -146,9 +137,10 @@ Ask Cursor's AI assistant to use the VA Design System search tool:
 - **AutoRAG errors**: Verify the `autoragId` is correct (`vads-rag-mcp` for VA Design System)
 
 ### Performance Tips
-- Use raw search mode (`useAISearch: false`) for faster responses
 - Start with `maxResults: 10` and adjust based on your needs
 - Use specific queries for better results ("button component accessibility" vs "button")
+- Lower `scoreThreshold` values (0.2-0.3) for broader searches when exploring
+- Higher `scoreThreshold` values (0.6-0.8) for precise, targeted results
 
 ## 🏗️ Technical Architecture
 

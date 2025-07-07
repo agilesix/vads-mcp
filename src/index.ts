@@ -31,13 +31,6 @@ export class MyMCP extends McpAgent<Env> {
           "This determines which knowledge base gets searched."
         ),
         
-        useAISearch: z.boolean().default(false).describe(
-          "Search mode selection:\n" +
-          "• false (default): Returns raw search results with document chunks, metadata, and similarity scores. Faster response, gives you direct access to source content.\n" +
-          "• true: Uses AI to synthesize search results into a comprehensive response with citations. Slower but provides a generated answer based on retrieved documents.\n" +
-          "Choose false for quick fact-finding, true for comprehensive explanations."
-        ),
-        
         maxResults: z.number().min(1).max(50).default(10).describe(
           "Maximum number of document chunks to retrieve from the knowledge base. " +
           "More results = broader coverage but potentially less focused. " +
@@ -52,28 +45,9 @@ export class MyMCP extends McpAgent<Env> {
           "• 0.0-0.3: Returns almost everything (use for very broad searches)"
         )
       },
-      async ({ query, autoragId, useAISearch, maxResults, scoreThreshold }) => {
+      async ({ query, autoragId, maxResults, scoreThreshold }) => {
         try {
-          if (useAISearch) {
-            // AI Search Mode: Generate comprehensive response with citations
-            const answer = await this.env.AI.autorag(autoragId).aiSearch({
-              query,
-              rewrite_query: true,
-              max_num_results: maxResults,
-              ranking_options: {
-                score_threshold: scoreThreshold
-              }
-            });
-            
-            return {
-              content: [{ 
-                type: "text", 
-                text: `**AI-Generated Response:**\n\n${answer.response}\n\n**Source Documents:**\n${JSON.stringify(answer.data, null, 2)}` 
-              }],
-            };
-          }
-          
-          // Raw Search Mode: Return document chunks with metadata
+          // Always use raw search mode for faster responses and direct access to source content
           const results = await this.env.AI.autorag(autoragId).search({
             query,
             rewrite_query: true,
