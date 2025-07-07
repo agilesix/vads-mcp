@@ -3,138 +3,99 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 /**
- * AutoRAG MCP Server
+ * VA Design System AutoRAG MCP Server
  * 
- * This MCP server exposes your Cloudflare AutoRAG instance as a tool that can be
- * used by MCP clients like Claude, Cursor, or AI Playground.
+ * This MCP server provides access to AutoRAG knowledge bases through
+ * Cloudflare's AutoRAG service. It's specifically configured for the
+ * VA Design System documentation but can search any AutoRAG instance.
  */
-export class MyMCP extends McpAgent {
+export class MyMCP extends McpAgent<Env> {
   server = new McpServer({
-    name: "AutoRAG MCP Server", 
+    name: "VA Design System AutoRAG MCP Server", 
     version: "1.0.0"
   });
 
   async init() {
-    // Tool to search documents in a specific AutoRAG using AI Search
+    // Primary tool for searching VA Design System documentation via AutoRAG
     this.server.tool(
-      "searchAutoRAG",
+      "searchDesignSystem",
       { 
-        autoragId: z.string().describe("The name of the AutoRAG instance (e.g., 'vads-rag-mcp')"),
-        query: z.string().describe("The search query"),
-        useAISearch: z.boolean().optional().describe("Use AI Search (with response generation) or basic search. Default: false")
+        query: z.string().min(1).describe(
+          "Your search query. Can be questions about VA Design System components, accessibility guidelines, design patterns, or any content in the knowledge base. " +
+          "Examples: 'How do I use the button component?', 'What are the color accessibility requirements?', 'Alert component variants'"
+        ),
+        
+        autoragId: z.string().min(1).default("vads-rag-mcp").describe(
+          "AutoRAG instance identifier to search. Use 'vads-rag-mcp' for VA Design System documentation. " +
+          "Other examples: 'design-patterns-rag', 'accessibility-docs-rag'. " +
+          "This determines which knowledge base gets searched."
+        ),
+        
+        useAISearch: z.boolean().default(false).describe(
+          "Search mode selection:\n" +
+          "• false (default): Returns raw search results with document chunks, metadata, and similarity scores. Faster response, gives you direct access to source content.\n" +
+          "• true: Uses AI to synthesize search results into a comprehensive response with citations. Slower but provides a generated answer based on retrieved documents.\n" +
+          "Choose false for quick fact-finding, true for comprehensive explanations."
+        ),
+        
+        maxResults: z.number().min(1).max(50).default(10).describe(
+          "Maximum number of document chunks to retrieve from the knowledge base. " +
+          "More results = broader coverage but potentially less focused. " +
+          "Recommended: 5-15 for specific questions, 20-50 for comprehensive research."
+        ),
+        
+        scoreThreshold: z.number().min(0).max(1).default(0.3).describe(
+          "Minimum similarity score (0.0 to 1.0) for including results. Controls result quality vs quantity:\n" +
+          "• 0.7-1.0: High precision, only very relevant matches (may miss some relevant content)\n" +
+          "• 0.5-0.7: Balanced precision and recall (recommended for most searches)\n" +
+          "• 0.3-0.5: High recall, includes loosely related content (good for exploratory searches)\n" +
+          "• 0.0-0.3: Returns almost everything (use for very broad searches)"
+        )
       },
-      async ({ autoragId, query, useAISearch = false }) => {
+      async ({ query, autoragId, useAISearch, maxResults, scoreThreshold }) => {
         try {
-          const endpoint = useAISearch ? 'ai-search' : 'search';
-          const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/${autoragId}/${endpoint}`,
-            {
-              method: "POST",
-              headers: {
-                'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                query,
-                rewrite_query: true,
-                max_num_results: 10,
-                ranking_options: {
-                  score_threshold: 0.3
-                }
-              }),
+          if (useAISearch) {
+            // AI Search Mode: Generate comprehensive response with citations
+            const answer = await this.env.AI.autorag(autoragId).aiSearch({
+              query,
+              rewrite_query: true,
+              max_num_results: maxResults,
+              ranking_options: {
+                score_threshold: scoreThreshold
+              }
+            });
+            
+            return {
+              content: [{ 
+                type: "text", 
+                text: `**AI-Generated Response:**\n\n${answer.response}\n\n**Source Documents:**\n${JSON.stringify(answer.data, null, 2)}` 
+              }],
+            };
+          }
+          
+          // Raw Search Mode: Return document chunks with metadata
+          const results = await this.env.AI.autorag(autoragId).search({
+            query,
+            rewrite_query: true,
+            max_num_results: maxResults,
+            ranking_options: {
+              score_threshold: scoreThreshold
             }
-          );
+          });
           
-          const data = await response.json();
+          const resultCount = Array.isArray(results) ? results.length : 'Unknown number of';
+          return {
+            content: [{ 
+              type: "text", 
+              text: `**Search Results (${resultCount} documents found):**\n\n${JSON.stringify(results, null, 2)}` 
+            }],
+          };
           
-          if (!data.success) {
-            return {
-              content: [{ 
-                type: "text", 
-                text: `Error searching AutoRAG "${autoragId}": ${data.errors?.[0]?.message || 'Unknown error'}` 
-              }],
-            };
-          }
-          
-          // Format the response nicely
-          if (useAISearch && data.result.response) {
-            // AI Search includes generated response
-            return {
-              content: [{ 
-                type: "text", 
-                text: `**AI Response:**\n${data.result.response}\n\n**Source Documents:**\n${JSON.stringify(data.result.data, null, 2)}` 
-              }],
-            };
-          } else {
-            // Basic search returns just the matching documents
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(data.result, null, 2) 
-              }],
-            };
-          }
         } catch (error) {
           return {
             content: [{ 
               type: "text", 
-              text: `Error: ${error.message}` 
-            }],
-          };
-        }
-      }
-    );
-    
-    // Convenience tool to search your specific AutoRAG "vads-rag-mcp" with basic search
-    this.server.tool(
-      "searchVADSRAG",
-      { 
-        query: z.string().describe("The search query for VA-related documents") 
-      },
-      async ({ query }) => {
-        try {
-          const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/autorag/rags/vads-rag-mcp/search`,
-            {
-              method: "POST",
-              headers: {
-                'Authorization': `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                query,
-                rewrite_query: true,
-                max_num_results: 10,
-                ranking_options: {
-                  score_threshold: 0.3
-                }
-              }),
-            }
-          );
-          
-          const data = await response.json();
-          
-          if (!data.success) {
-            return {
-              content: [{ 
-                type: "text", 
-                text: `Error searching VADS AutoRAG: ${data.errors?.[0]?.message || 'Unknown error'}` 
-              }],
-            };
-          }
-          
-          // Return just the document results
-          return {
-            content: [{ 
-              type: "text", 
-              text: JSON.stringify(data.result, null, 2) 
-            }],
-          };
-        } catch (error) {
-          return {
-            content: [{ 
-              type: "text", 
-              text: `Error: ${error.message}` 
+              text: `**Error searching "${autoragId}":**\n\n${error instanceof Error ? error.message : String(error)}\n\n**Troubleshooting:**\n- Verify the AutoRAG instance "${autoragId}" exists and is accessible\n- Check if the knowledge base has finished indexing\n- Try a simpler query or adjust the score threshold\n- Ensure you have proper permissions to access this AutoRAG instance` 
             }],
           };
         }

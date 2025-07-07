@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "vads-autorag-mcp": {
+    "va-design-system": {
       "command": "npx",
       "args": [
         "-y", 
         "@modelcontextprotocol/server-sse", 
-        "https://remote-mcp-server-authless.michael-collier.workers.dev/sse"
+        "https://vads-mcp.a6lab.ai/sse"
       ]
     }
   }
