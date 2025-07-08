@@ -1,15 +1,16 @@
 import { z } from "zod";
 import type { ToolDefinition } from "../types";
+import { ComponentStatus } from "../types";
 
 export const listComponentsSchema = z.object({
 	status: z
 		.enum([
-			"RECOMMENDED",
-			"STABLE",
-			"EXPERIMENTAL",
-			"AVAILABLE_WITH_ISSUES",
-			"USE_WITH_CAUTION",
-			"UNKNOWN",
+			ComponentStatus.RECOMMENDED,
+			ComponentStatus.STABLE,
+			ComponentStatus.EXPERIMENTAL,
+			ComponentStatus.AVAILABLE_WITH_ISSUES,
+			ComponentStatus.USE_WITH_CAUTION,
+			ComponentStatus.UNKNOWN,
 			"all",
 		])
 		.default("all")

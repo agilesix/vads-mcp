@@ -1,5 +1,42 @@
 import type { ComponentProperty } from "../../../types";
 
+/**
+ * PropertyClassifier - Classifies component properties by purpose and functionality
+ * 
+ * This service analyzes component properties to categorize them by their intended
+ * purpose and functionality. It uses pattern matching on property names and types
+ * to classify properties into semantic categories that drive example generation
+ * and component analysis.
+ * 
+ * ## Classification Categories
+ * 
+ * - **Visible Content**: Properties that affect user-visible text and content
+ * - **Accessibility**: Properties related to screen readers and accessibility
+ * - **State**: Properties that control component state and behavior
+ * - **Configuration**: Properties that configure appearance and behavior
+ * - **Events**: Event handler properties (onClick, onSubmit, etc.)
+ * - **Slots**: Properties related to content slots and children
+ * - **Form**: Properties specific to form components and validation
+ * - **Conditional**: Properties that control conditional rendering
+ * 
+ * ## Pattern Matching
+ * 
+ * Uses intelligent pattern matching to classify properties:
+ * - Name-based patterns (e.g., "text", "label", "aria-*")
+ * - Type-based patterns (e.g., boolean for state, function for events)
+ * - Context-aware classification (e.g., distinguishing config vs state booleans)
+ * 
+ * ## Usage in Pipeline
+ * 
+ * Property classification drives:
+ * - Semantic analysis of component purpose
+ * - Example generation strategies
+ * - Content strategy determination
+ * - Required vs optional property prioritization
+ * 
+ * @see SemanticAnalyzer For using classification results
+ * @see ExampleGenerator For applying classifications to examples
+ */
 export class PropertyClassifier {
 	isVisibleContentProp(propName: string, propType: string): boolean {
 		const visibleContentPatterns = [

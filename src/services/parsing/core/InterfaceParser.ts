@@ -1,5 +1,51 @@
 import type { ComponentProperty } from "../../../types";
 
+/**
+ * InterfaceParser - Parses TypeScript interface properties from component definitions
+ * 
+ * This service extracts property information from TypeScript interface bodies,
+ * including property names, types, optional status, and JSDoc descriptions.
+ * It handles the parsing of complex TypeScript syntax including union types,
+ * optional properties, and quoted property names.
+ * 
+ * ## Parsing Capabilities
+ * 
+ * - **Property Types**: Handles primitive types, union types, arrays, and objects
+ * - **Optional Properties**: Detects optional properties using `?` syntax
+ * - **Quoted Names**: Supports quoted property names like `"aria-label"`
+ * - **JSDoc Comments**: Extracts and cleans property descriptions from comments
+ * - **Complex Types**: Parses union types, generics, and nested structures
+ * 
+ * ## Input Format
+ * 
+ * Processes TypeScript interface bodies like:
+ * 
+ * ```typescript
+ * {
+ *   /**
+ *    * The button text to display
+ *    *\/
+ *   text: string;
+ *   
+ *   disabled?: boolean;
+ *   
+ *   "aria-label"?: string;
+ *   
+ *   variant: "primary" | "secondary" | "ghost";
+ * }
+ * ```
+ * 
+ * ## Output
+ * 
+ * Returns ComponentProperty objects with:
+ * - `name`: Property name (unquoted)
+ * - `type`: TypeScript type string
+ * - `optional`: Boolean indicating if property is optional
+ * - `description`: Cleaned JSDoc description (if present)
+ * 
+ * @see ComponentProperty For the structure of parsed property data
+ * @see MetadataExtractor For extracting the interface body
+ */
 export class InterfaceParser {
 	parseInterfaceProperties(interfaceBody: string): ComponentProperty[] {
 		const properties: ComponentProperty[] = [];

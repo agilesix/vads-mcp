@@ -1,14 +1,61 @@
-import type { ComponentData, ComponentExample, ComponentSemanticAnalysis } from "../../../types";
+import type { ComponentData, ComponentExample, ComponentSemanticAnalysis, ExampleType } from "../../../types";
+import { ExampleType as Type, ContentStrategy, ComponentPurpose as Purpose } from "../../../types";
 import { ValueGenerator } from "./ValueGenerator";
 import { CompositeDetector } from "./CompositeDetector";
+import { PropertyClassifier } from "../analysis/PropertyClassifier";
 
+/**
+ * ExampleGenerator - Generates contextual usage examples for VA Design System components
+ * 
+ * This service creates comprehensive usage examples for components based on their
+ * semantic analysis. It generates multiple example types tailored to different
+ * use cases and contexts, ensuring developers can see practical implementations.
+ * 
+ * ## Example Types Generated
+ * 
+ * - **BASIC**: Essential usage with required properties and key visible content
+ * - **STATE**: Variations showing different component states (disabled, loading, etc.)
+ * - **ACCESSIBILITY**: Enhanced examples with accessibility features
+ * - **FORM**: Examples showing component usage within form contexts
+ * 
+ * ## Generation Strategy
+ * 
+ * The generator uses semantic analysis to create contextually appropriate examples:
+ * 
+ * 1. **Property Prioritization**: Uses semantic analysis to prioritize which properties to include
+ * 2. **Value Generation**: Generates realistic, contextual values using ValueGenerator
+ * 3. **Content Strategy**: Applies content strategy (visible-first, form-label, etc.) to focus examples
+ * 4. **Composite Detection**: Handles complex components with child elements
+ * 5. **Context Awareness**: Adapts examples based on component purpose (action, input, etc.)
+ * 
+ * ## Content Strategies
+ * 
+ * - **visible-first**: Prioritizes user-visible text properties in examples
+ * - **form-label**: Focuses on form labels and validation for form components
+ * - **structure-first**: Emphasizes structural and layout properties
+ * 
+ * ## Integration
+ * 
+ * Works with other services:
+ * - **ValueGenerator**: Creates contextual property values
+ * - **CompositeDetector**: Handles components with child elements
+ * - **PropertyClassifier**: Uses property classifications for example focus
+ * - **SemanticAnalyzer**: Applies semantic analysis to guide generation
+ * 
+ * @see ValueGenerator For contextual value generation
+ * @see CompositeDetector For handling composite components
+ * @see SemanticAnalyzer For the semantic analysis that drives generation
+ * @see ExampleType For the types of examples generated
+ */
 export class ExampleGenerator {
 	private valueGenerator: ValueGenerator;
 	private compositeDetector: CompositeDetector;
+	private propertyClassifier: PropertyClassifier;
 
 	constructor() {
 		this.valueGenerator = new ValueGenerator();
 		this.compositeDetector = new CompositeDetector();
+		this.propertyClassifier = new PropertyClassifier();
 	}
 
 	generateExamples(component: ComponentData, options: any = {}): ComponentExample[] {
@@ -52,7 +99,7 @@ export class ExampleGenerator {
 			}
 		});
 
-		if (analysis.contentStrategy === "visible-first") {
+		if (analysis.contentStrategy === ContentStrategy.VISIBLE_FIRST) {
 			analysis.visibleTextProps.slice(0, 2).forEach((prop) => {
 				if (!analysis.requiredProps.includes(prop)) {
 					const value = this.valueGenerator.generateContextualValue(prop, analysis);
@@ -61,7 +108,7 @@ export class ExampleGenerator {
 					}
 				}
 			});
-		} else if (analysis.contentStrategy === "form-label") {
+		} else if (analysis.contentStrategy === ContentStrategy.FORM_LABEL) {
 			const labelProp = analysis.visibleTextProps.find((p) =>
 				p.name.toLowerCase().includes("label"),
 			);
@@ -85,7 +132,7 @@ export class ExampleGenerator {
 			description: `Basic implementation of the ${tagName} component with essential properties.`,
 			code: `<${tagName}${attributeString}>${content}</${tagName}>`,
 			framework: "html",
-			purpose: "basic",
+			purpose: Type.BASIC,
 		};
 	}
 
@@ -110,7 +157,7 @@ export class ExampleGenerator {
 			description: `Examples showing different states of the ${tagName} component.`,
 			code: examples.join("\n"),
 			framework: "html",
-			purpose: "state",
+			purpose: Type.STATE,
 		};
 	}
 
@@ -131,7 +178,7 @@ export class ExampleGenerator {
 			description: `${tagName} component with enhanced accessibility features.`,
 			code: `<${tagName} ${a11yAttributes}></${tagName}>`,
 			framework: "html",
-			purpose: "accessibility",
+			purpose: Type.ACCESSIBILITY,
 		};
 	}
 
@@ -152,19 +199,12 @@ export class ExampleGenerator {
 			description: `${tagName} component used within a form context.`,
 			code: `<form>\n  <${tagName} ${formAttributes} required></${tagName}>\n</form>`,
 			framework: "html",
-			purpose: "form",
+			purpose: Type.FORM,
 		};
 	}
 
 	private isFormRelatedProp(propName: string): boolean {
-		const formPatterns = [
-			"name", "value", "required", "validation", "error",
-			"invalid", "valid", "pattern", "min", "max", "step",
-			"multiple", "accept", "autocomplete"
-		];
-		
-		const name = propName.toLowerCase();
-		return formPatterns.some(pattern => name.includes(pattern));
+		return this.propertyClassifier.isFormRelatedProp(propName);
 	}
 
 	private getAnalysisFromOptions(options: any, component: ComponentData, properties: any[]): ComponentSemanticAnalysis {
@@ -173,85 +213,22 @@ export class ExampleGenerator {
 		}
 
 		return {
-			visibleTextProps: properties.filter(p => this.isVisibleContentProp(p.name, p.type)),
-			accessibilityProps: properties.filter(p => this.isAccessibilityProp(p.name, p.type)),
-			stateProps: properties.filter(p => this.isStateProp(p.name, p.type)),
-			configProps: properties.filter(p => this.isConfigProp(p.name, p.type)),
-			eventProps: properties.filter(p => this.isEventProp(p.name)),
+			visibleTextProps: properties.filter(p => this.propertyClassifier.isVisibleContentProp(p.name, p.type)),
+			accessibilityProps: properties.filter(p => this.propertyClassifier.isAccessibilityProp(p.name, p.type)),
+			stateProps: properties.filter(p => this.propertyClassifier.isStateProp(p.name, p.type)),
+			configProps: properties.filter(p => this.propertyClassifier.isConfigProp(p.name, p.type)),
+			eventProps: properties.filter(p => this.propertyClassifier.isEventProp(p.name)),
 			requiredProps: properties.filter(p => !p.optional),
-			slotProps: properties.filter(p => this.isSlotProp(p.name)),
-			isFormRelated: properties.some(p => this.isFormRelatedProp(p.name)),
-			isInteractive: properties.some(p => this.isEventProp(p.name)),
-			hasStates: properties.some(p => this.isStateProp(p.name, p.type)),
-			hasConditionalContent: properties.some(p => this.isConditionalProp(p.name)),
-			hasAccessibilityEnhancements: properties.some(p => this.isAccessibilityProp(p.name, p.type)),
-			hasSlots: properties.some(p => this.isSlotProp(p.name)),
-			inferredPurpose: "display",
-			contentStrategy: "unknown",
+			slotProps: properties.filter(p => this.propertyClassifier.isSlotProp(p.name)),
+			isFormRelated: properties.some(p => this.propertyClassifier.isFormRelatedProp(p.name)),
+			isInteractive: properties.some(p => this.propertyClassifier.isEventProp(p.name)),
+			hasStates: properties.some(p => this.propertyClassifier.isStateProp(p.name, p.type)),
+			hasConditionalContent: properties.some(p => this.propertyClassifier.isConditionalProp(p.name)),
+			hasAccessibilityEnhancements: properties.some(p => this.propertyClassifier.isAccessibilityProp(p.name, p.type)),
+			hasSlots: properties.some(p => this.propertyClassifier.isSlotProp(p.name)),
+			inferredPurpose: Purpose.DISPLAY,
+			contentStrategy: ContentStrategy.UNKNOWN,
 		};
 	}
 
-	private isVisibleContentProp(propName: string, propType: string): boolean {
-		const visibleContentPatterns = [
-			"text", "label", "headline", "title", "message", "content",
-			"description", "placeholder", "value", "children", "header",
-			"footer", "caption", "summary", "detail"
-		];
-		
-		const name = propName.toLowerCase();
-		return visibleContentPatterns.some(pattern => name.includes(pattern)) &&
-			   !this.isAccessibilityProp(propName, propType);
-	}
-
-	private isAccessibilityProp(propName: string, propType: string): boolean {
-		const accessibilityPatterns = [
-			"aria-", "role", "tabindex", "alt", "title",
-			"describedby", "labelledby", "live", "atomic",
-			"relevant", "busy", "disabled", "readonly"
-		];
-		
-		const name = propName.toLowerCase();
-		return accessibilityPatterns.some(pattern => name.includes(pattern));
-	}
-
-	private isStateProp(propName: string, propType: string): boolean {
-		const statePatterns = [
-			"disabled", "loading", "error", "success", "warning",
-			"active", "selected", "checked", "expanded", "collapsed",
-			"visible", "hidden", "open", "closed", "focused"
-		];
-		
-		const name = propName.toLowerCase();
-		const type = propType.toLowerCase();
-		
-		return statePatterns.some(pattern => name.includes(pattern)) ||
-			   (type.includes("boolean") && !this.isConfigProp(propName, propType));
-	}
-
-	private isConfigProp(propName: string, propType: string): boolean {
-		const configPatterns = [
-			"size", "variant", "theme", "color", "type", "format",
-			"layout", "position", "align", "direction", "orientation"
-		];
-		
-		const name = propName.toLowerCase();
-		return configPatterns.some(pattern => name.includes(pattern));
-	}
-
-	private isEventProp(propName: string): boolean {
-		return propName.toLowerCase().startsWith("on");
-	}
-
-	private isSlotProp(propName: string): boolean {
-		return propName.toLowerCase().includes("slot");
-	}
-
-	private isConditionalProp(propName: string): boolean {
-		const conditionalPatterns = [
-			"show", "hide", "if", "when", "unless", "conditional"
-		];
-		
-		const name = propName.toLowerCase();
-		return conditionalPatterns.some(pattern => name.includes(pattern));
-	}
 }
