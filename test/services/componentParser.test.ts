@@ -63,12 +63,12 @@ describe("ComponentParser", () => {
 			`;
 			const properties = parser.parseInterfaceProperties(interfaceBody);
 			expect(properties).toHaveLength(1);
-			expect(properties[0]).toEqual({
-				name: "text",
-				type: "string",
-				optional: false,
-				description: "* The button text /",
-			});
+		expect(properties[0]).toEqual({
+			name: "text",
+			type: "string",
+			optional: false,
+			description: "The button text",
+		});
 		});
 
 		it("should parse optional property", () => {
