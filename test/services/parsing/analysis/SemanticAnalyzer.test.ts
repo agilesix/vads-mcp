@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SemanticAnalyzer } from "../../../../src/services/parsing/analysis/SemanticAnalyzer";
 import type { ComponentData, ComponentProperty } from "../../../../src/types";
+import { ComponentStatus, MaturityLevel } from "../../../../src/types";
 
 describe("SemanticAnalyzer", () => {
 	const analyzer = new SemanticAnalyzer();
@@ -10,8 +11,8 @@ describe("SemanticAnalyzer", () => {
 			const component: ComponentData = {
 				name: "Button",
 				tagName: "va-button",
-				status: "RECOMMENDED",
-				maturityLevel: "best_practice",
+				status: ComponentStatus.RECOMMENDED,
+				maturityLevel: MaturityLevel.BEST_PRACTICE,
 			};
 
 			const properties: ComponentProperty[] = [
@@ -33,8 +34,8 @@ describe("SemanticAnalyzer", () => {
 			const component: ComponentData = {
 				name: "TextInput",
 				tagName: "va-text-input",
-				status: "RECOMMENDED",
-				maturityLevel: "best_practice",
+				status: ComponentStatus.RECOMMENDED,
+				maturityLevel: MaturityLevel.BEST_PRACTICE,
 			};
 
 			const properties: ComponentProperty[] = [

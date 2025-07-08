@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { MetadataExtractor } from "../../../../src/services/parsing/core/MetadataExtractor";
+import { MaturityLevel } from "../../../../src/types";
 
 describe("MetadataExtractor", () => {
 	const extractor = new MetadataExtractor();
@@ -21,7 +22,7 @@ describe("MetadataExtractor", () => {
 			expect(blocks).toHaveLength(1);
 			expect(blocks[0].componentName).toBe("Button");
 			expect(blocks[0].maturityCategory).toBe("use");
-			expect(blocks[0].maturityLevel).toBe("best_practice");
+			expect(blocks[0].maturityLevel).toBe(MaturityLevel.BEST_PRACTICE);
 		});
 
 		it("should extract multiple component blocks", () => {
@@ -75,7 +76,7 @@ describe("MetadataExtractor", () => {
 			const metadata = extractor.extractJSDocMetadata(comment);
 			expect(metadata.componentName).toBe("Button");
 			expect(metadata.maturityCategory).toBe("use");
-			expect(metadata.maturityLevel).toBe("best_practice");
+			expect(metadata.maturityLevel).toBe(MaturityLevel.BEST_PRACTICE);
 			expect(metadata.guidanceHref).toBe("https://example.com");
 		});
 	});

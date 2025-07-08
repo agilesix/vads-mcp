@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ToolDefinition } from "../types";
-import { ComponentStatus } from "../types";
+import { ComponentStatus, ExampleType } from "../types";
 
 export const listComponentsSchema = z.object({
 	status: z
@@ -190,7 +190,7 @@ export const listComponentsTool: ToolDefinition = {
 				output += `\`\`\`\n\n`;
 				output += `**Get component examples:**\n`;
 				output += `\`\`\`\n`;
-				output += `getComponentExamples(componentName: "alert", exampleTypes: ["basic", "state"])\n`;
+				output += `getComponentExamples(componentName: "alert", exampleTypes: ["${ExampleType.BASIC}", "${ExampleType.STATE}"])\n`;
 				output += `getComponentExamples(componentName: "button-icon", framework: "react")\n`;
 				output += `\`\`\`\n\n`;
 				output += `**Search documentation:**\n`;

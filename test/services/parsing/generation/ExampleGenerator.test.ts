@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ExampleGenerator } from "../../../../src/services/parsing/generation/ExampleGenerator";
 import type { ComponentData } from "../../../../src/types";
+import { ComponentStatus, MaturityLevel, ExampleType } from "../../../../src/types";
 
 describe("ExampleGenerator", () => {
 	const generator = new ExampleGenerator();
@@ -10,8 +11,8 @@ describe("ExampleGenerator", () => {
 			const component: ComponentData = {
 				name: "Button",
 				tagName: "va-button",
-				status: "RECOMMENDED",
-				maturityLevel: "best_practice",
+				status: ComponentStatus.RECOMMENDED,
+				maturityLevel: MaturityLevel.BEST_PRACTICE,
 				properties: [
 					{ name: "text", type: "string", optional: false },
 					{ name: "disabled", type: "boolean", optional: true },
@@ -29,8 +30,8 @@ describe("ExampleGenerator", () => {
 			const component: ComponentData = {
 				name: "TextInput",
 				tagName: "va-text-input",
-				status: "RECOMMENDED",
-				maturityLevel: "best_practice",
+				status: ComponentStatus.RECOMMENDED,
+				maturityLevel: MaturityLevel.BEST_PRACTICE,
 				properties: [
 					{ name: "label", type: "string", optional: false },
 					{ name: "name", type: "string", optional: false },
@@ -42,7 +43,7 @@ describe("ExampleGenerator", () => {
 			const examples = generator.generateExamples(component);
 
 			expect(examples.length).toBeGreaterThan(1);
-			expect(examples.some(ex => ex.purpose === "basic")).toBe(true);
+			expect(examples.some(ex => ex.purpose === ExampleType.BASIC)).toBe(true);
 		});
 	});
 });
