@@ -184,6 +184,136 @@ export class ComponentParser {
 		}
 	}
 
+	/**
+	 * Enhanced component matching with support for multiple naming conventions
+	 * @param componentName - The name to search for (supports kebab-case, space-separated, etc.)
+	 * @param components - Map of components to search in
+	 * @returns The matched component or null if not found
+	 */
+	findComponentByName(
+		componentName: string,
+		components: Map<string, ComponentData>,
+	): ComponentData | null {
+		// Try exact match first
+		const exactMatch = components.get(componentName);
+		if (exactMatch) return exactMatch;
+
+		// Normalize the input name and try various matching strategies
+		const normalizedName = this.normalizeComponentName(componentName);
+
+		// Try to find by various name formats
+		for (const [_, component] of components) {
+			if (this.isNameMatch(componentName, component)) {
+				return component;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Normalize component name to handle different naming conventions
+	 * @param name - The component name to normalize
+	 * @returns Normalized component name
+	 */
+	private normalizeComponentName(name: string): string {
+		// Convert kebab-case to space-separated
+		// "file-input-multiple" -> "file input multiple"
+		// "alert-expandable" -> "alert expandable"
+		return name
+			.replace(/-/g, " ")
+			.toLowerCase()
+			.replace(/\b\w/g, (l) => l.toUpperCase()); // Title case
+	}
+
+	/**
+	 * Check if a given name matches a component using multiple strategies
+	 * @param inputName - The name provided by the user
+	 * @param component - The component to check against
+	 * @returns true if there's a match
+	 */
+	private isNameMatch(inputName: string, component: ComponentData): boolean {
+		const input = inputName.toLowerCase();
+		const componentName = component.name.toLowerCase();
+		const tagName = component.tagName.toLowerCase();
+
+		// Strategy 1: Exact match (case-insensitive)
+		if (input === componentName) return true;
+
+		// Strategy 2: Tag name match (with or without va- prefix)
+		if (input === tagName || input === tagName.replace("va-", "")) return true;
+
+		// Strategy 3: Kebab-case to space conversion
+		// "file-input-multiple" should match "File input multiple"
+		const normalizedInput = this.normalizeComponentName(inputName);
+		if (normalizedInput.toLowerCase() === componentName) return true;
+
+		// Strategy 4: Space-separated to kebab-case conversion
+		// "file input multiple" should match "va-file-input-multiple"
+		const kebabFromSpaces = componentName.replace(/\s+/g, "-");
+		if (input === kebabFromSpaces) return true;
+
+		// Strategy 5: Handle special cases with hyphens in original names
+		// "Alert - expandable" should match "alert-expandable"
+		const cleanedComponentName = componentName.replace(/\s*-\s*/g, "-");
+		if (input === cleanedComponentName) return true;
+
+		// Strategy 6: Remove all separators and compare
+		const inputClean = input.replace(/[-\s]/g, "");
+		const componentClean = componentName.replace(/[-\s]/g, "");
+		if (inputClean === componentClean) return true;
+
+		return false;
+	}
+
+	/**
+	 * Get suggestions for similar component names
+	 * @param inputName - The name that wasn't found
+	 * @param components - Map of all components
+	 * @returns Array of suggested component names
+	 */
+	getSuggestedComponentNames(
+		inputName: string,
+		components: Map<string, ComponentData>,
+	): string[] {
+		const input = inputName.toLowerCase();
+		const suggestions: Array<{ name: string; score: number }> = [];
+
+		for (const [_, component] of components) {
+			const componentName = component.name.toLowerCase();
+
+			// Simple similarity scoring
+			let score = 0;
+
+			// Exact substring match
+			if (componentName.includes(input) || input.includes(componentName)) {
+				score += 10;
+			}
+
+			// Word overlap
+			const inputWords = input.split(/[-\s]/);
+			const componentWords = componentName.split(/[-\s]/);
+			const commonWords = inputWords.filter((word) =>
+				componentWords.some((cWord) => cWord.includes(word) || word.includes(cWord)),
+			);
+			score += commonWords.length * 5;
+
+			// Length similarity
+			const lengthDiff = Math.abs(input.length - componentName.length);
+			score += Math.max(0, 5 - lengthDiff);
+
+			if (score > 0) {
+				suggestions.push({ name: component.name, score });
+			}
+		}
+
+		// Sort by score and return top suggestions
+		return suggestions
+			.sort((a, b) => b.score - a.score)
+			.slice(0, 5)
+			.map((s) => s.name);
+	}
+
 	analyzeComponentSemantics(
 		component: ComponentData,
 		properties: ComponentProperty[],

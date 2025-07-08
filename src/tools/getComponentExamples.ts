@@ -61,22 +61,34 @@ export const getComponentExamplesTool: ToolDefinition = {
 			// Parse the TypeScript definitions
 			const components = componentParser.parseComponentMetadata(content);
 
-			// Find the requested component
-			const component =
-				components.get(componentName) ||
-				Array.from(components.values()).find(
-					(c: any) =>
-						c.name.toLowerCase() === componentName.toLowerCase() ||
-						c.tagName === `va-${componentName.toLowerCase()}`,
-				);
+			// Find the requested component using enhanced matching
+			const component = componentParser.findComponentByName(componentName, components);
 
 			if (!component) {
+				const suggestions = componentParser.getSuggestedComponentNames(
+					componentName,
+					components,
+				);
 				const availableComponents = Array.from(components.keys()).sort();
+
+				let errorMessage = `**Component "${componentName}" not found.**\n\n`;
+
+				if (suggestions.length > 0) {
+					errorMessage += `**Did you mean:**\n${suggestions.map((name: string) => `• ${name}`).join("\n")}\n\n`;
+				}
+
+				errorMessage += `**💡 Naming Convention Tips:**\n`;
+				errorMessage += `• Use kebab-case: \`file-input-multiple\`, \`alert-expandable\`, \`button-icon\`\n`;
+				errorMessage += `• Or use exact names: \`File input multiple\`, \`Alert - expandable\`, \`Button - Icon\`\n`;
+				errorMessage += `• Don't include 'va-' prefix: use \`button\` not \`va-button\`\n\n`;
+
+				errorMessage += `**All available components:**\n${availableComponents.map((name) => `• ${name}`).join("\n")}`;
+
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: `**Component "${componentName}" not found.**\n\n**Available components:**\n${availableComponents.map((name) => `• ${name}`).join("\n")}\n\n**Note:** Component names should not include the 'va-' prefix. Use 'button' instead of 'va-button'.`,
+							text: errorMessage,
 						},
 					],
 				};
@@ -149,8 +161,10 @@ export const getComponentExamplesTool: ToolDefinition = {
 					}
 				}
 
-				response += "• **Documentation:** Refer to the VA Design System documentation for complete usage guidelines\n";
-				response += "• **Accessibility:** Always test with screen readers and keyboard navigation\n";
+				response +=
+					"• **Documentation:** Refer to the VA Design System documentation for complete usage guidelines\n";
+				response +=
+					"• **Accessibility:** Always test with screen readers and keyboard navigation\n";
 			}
 
 			return {

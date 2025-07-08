@@ -50,22 +50,34 @@ export const getComponentPropertiesTool: ToolDefinition = {
 			// Parse the TypeScript definitions
 			const components = componentParser.parseComponentMetadata(content);
 
-			// Find the requested component
-			const component =
-				components.get(componentName) ||
-				Array.from(components.values()).find(
-					(c: any) =>
-						c.name.toLowerCase() === componentName.toLowerCase() ||
-						c.tagName === `va-${componentName.toLowerCase()}`,
-				);
+			// Find the requested component using enhanced matching
+			const component = componentParser.findComponentByName(componentName, components);
 
 			if (!component) {
+				const suggestions = componentParser.getSuggestedComponentNames(
+					componentName,
+					components,
+				);
 				const availableComponents = Array.from(components.keys()).sort();
+
+				let errorMessage = `**Component "${componentName}" not found.**\n\n`;
+
+				if (suggestions.length > 0) {
+					errorMessage += `**Did you mean:**\n${suggestions.map((name: string) => `• ${name}`).join("\n")}\n\n`;
+				}
+
+				errorMessage += `**💡 Naming Convention Tips:**\n`;
+				errorMessage += `• Use kebab-case: \`file-input-multiple\`, \`alert-expandable\`, \`button-icon\`\n`;
+				errorMessage += `• Or use exact names: \`File input multiple\`, \`Alert - expandable\`, \`Button - Icon\`\n`;
+				errorMessage += `• Don't include 'va-' prefix: use \`button\` not \`va-button\`\n\n`;
+
+				errorMessage += `**All available components:**\n${availableComponents.map((name) => `• ${name}`).join("\n")}`;
+
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: `**Component "${componentName}" not found.**\n\n**Available components:**\n${availableComponents.map((name) => `• ${name}`).join("\n")}\n\n**Note:** Component names should not include the 'va-' prefix. Use 'button' instead of 'va-button'.`,
+							text: errorMessage,
 						},
 					],
 				};
@@ -92,28 +104,28 @@ export const getComponentPropertiesTool: ToolDefinition = {
 				const requiredProps = properties.filter((p: any) => !p.optional);
 				const optionalProps = properties.filter((p: any) => p.optional);
 
-							if (requiredProps.length > 0) {
-				response += `### Required Properties (${requiredProps.length})\n\n`;
-				for (const prop of requiredProps) {
-					response += formatProperty(prop, includeDescription, includeExamples);
+				if (requiredProps.length > 0) {
+					response += `### Required Properties (${requiredProps.length})\n\n`;
+					for (const prop of requiredProps) {
+						response += formatProperty(prop, includeDescription, includeExamples);
+					}
 				}
-			}
 
-							if (optionalProps.length > 0) {
-				response += `### Optional Properties (${optionalProps.length})\n\n`;
-				for (const prop of optionalProps) {
-					response += formatProperty(prop, includeDescription, includeExamples);
+				if (optionalProps.length > 0) {
+					response += `### Optional Properties (${optionalProps.length})\n\n`;
+					for (const prop of optionalProps) {
+						response += formatProperty(prop, includeDescription, includeExamples);
+					}
 				}
-			}
 
-							// Add usage summary
-			response += "\n## Usage Summary\n\n";
+				// Add usage summary
+				response += "\n## Usage Summary\n\n";
 				response += `• **Required props:** ${requiredProps.length}\n`;
 				response += `• **Optional props:** ${optionalProps.length}\n`;
 				response += `• **Total props:** ${properties.length}\n\n`;
 
-							if (requiredProps.length > 0) {
-				response += "**Minimum viable usage:**\n```html\n";
+				if (requiredProps.length > 0) {
+					response += "**Minimum viable usage:**\n```html\n";
 					const requiredAttrs = requiredProps
 						.filter((p: any) => !p.type.includes("boolean"))
 						.map((p: any) => `${p.name}="value"`)
@@ -122,8 +134,8 @@ export const getComponentPropertiesTool: ToolDefinition = {
 						.filter((p: any) => p.type.includes("boolean"))
 						.map((p: any) => p.name)
 						.join(" ");
-								const allAttrs = [requiredAttrs, booleanAttrs].filter(Boolean).join(" ");
-			response += `<${component.tagName}${allAttrs ? ` ${allAttrs}` : ""}></${component.tagName}>\n\`\`\`\n`;
+					const allAttrs = [requiredAttrs, booleanAttrs].filter(Boolean).join(" ");
+					response += `<${component.tagName}${allAttrs ? ` ${allAttrs}` : ""}></${component.tagName}>\n\`\`\`\n`;
 				}
 			}
 

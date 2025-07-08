@@ -47,9 +47,9 @@ export class MyMCP extends McpAgent<Env> {
 		// - searchDesignSystem: Search VA Design System documentation via AutoRAG
 		// - getComponentProperties: Fetch and parse component TypeScript definitions
 		// - getComponentExamples: Generate component usage examples
+		// - listComponents: List all VA components with their status and recommendations
 		// Future possibilities:
 		// - validateComponent: Check component usage against design system rules
-		// - getComponentStatus: Get component maturity and recommendation info
 	}
 
 	// Helper methods for future tools to use
