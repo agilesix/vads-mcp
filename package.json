@@ -23,7 +23,6 @@
 		"@biomejs/biome": "^1.9.4",
 		"@cloudflare/vitest-pool-workers": "^0.8.50",
 		"@vitest/ui": "^3.2.4",
-		"happy-dom": "^18.0.1",
 		"typescript": "^5.8.3",
 		"vitest": "^3.2.4",
 		"wrangler": "^4.16.1"

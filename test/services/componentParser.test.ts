@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { env } from "cloudflare:test";
 import { ComponentParser } from "../../src/services/componentParser";
 
 describe("ComponentParser", () => {
