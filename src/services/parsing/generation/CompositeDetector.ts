@@ -1,5 +1,46 @@
 import type { ComponentSemanticAnalysis } from "../../../types";
 
+/**
+ * CompositeDetector - Detects and handles composite components with child elements
+ * 
+ * This service identifies components that contain child elements and generates
+ * appropriate child content for complex components like radio groups, accordions,
+ * and button groups. It provides specialized logic for creating realistic
+ * composite component examples.
+ * 
+ * ## Composite Component Types
+ * 
+ * - **Form Choice Groups**: Radio buttons and checkbox groups with multiple options
+ * - **Collapsible Containers**: Accordions and expandable sections
+ * - **Action Groups**: Button groups and toolbars with multiple actions
+ * - **Navigation Groups**: Menu items and navigation lists
+ * 
+ * ## Detection Strategy
+ * 
+ * Uses component tag names and semantic analysis to identify composite patterns:
+ * - Tag name patterns (radio, checkbox, accordion, button-group)
+ * - Property analysis for child-related properties
+ * - Semantic analysis for container-like behavior
+ * 
+ * ## Child Generation
+ * 
+ * Generates contextually appropriate child elements:
+ * - **Radio/Checkbox Groups**: Creates multiple options with realistic labels
+ * - **Accordions**: Generates expandable sections with headers
+ * - **Button Groups**: Creates action buttons with appropriate text
+ * - **Generic Containers**: Provides slot content placeholders
+ * 
+ * ## Integration
+ * 
+ * Works with ExampleGenerator to:
+ * - Detect when components need child content
+ * - Generate appropriate child element structures
+ * - Create realistic sample data for child properties
+ * - Handle nested component relationships
+ * 
+ * @see ExampleGenerator For using composite detection in examples
+ * @see ValueGenerator For generating child property values
+ */
 export interface CompositeInfo {
 	type: string;
 	childElement: string;

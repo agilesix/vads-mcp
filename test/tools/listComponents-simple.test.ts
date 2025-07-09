@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { listComponentsSchema } from "../../src/tools/listComponents";
+import { ComponentStatus } from "../../src/types";
 
 describe("listComponents Tool Schema", () => {
 	it("should have correct schema definition", () => {
@@ -19,12 +20,12 @@ describe("listComponents Tool Schema", () => {
 
 	it("should validate status enum values", () => {
 		const validStatuses = [
-			"RECOMMENDED",
-			"STABLE", 
-			"EXPERIMENTAL",
-			"AVAILABLE_WITH_ISSUES",
-			"USE_WITH_CAUTION",
-			"UNKNOWN",
+			ComponentStatus.RECOMMENDED,
+			ComponentStatus.STABLE, 
+			ComponentStatus.EXPERIMENTAL,
+			ComponentStatus.AVAILABLE_WITH_ISSUES,
+			ComponentStatus.USE_WITH_CAUTION,
+			ComponentStatus.UNKNOWN,
 			"all",
 		];
 

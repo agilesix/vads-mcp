@@ -6,6 +6,49 @@ import type {
 } from "../types";
 import { ComponentParserFactory } from "./parsing/ComponentParserFactory";
 
+/**
+ * ComponentParser - Main facade for VA Design System component parsing
+ * 
+ * This class serves as the primary interface for parsing TypeScript definition files
+ * from the VA Design System component library. It uses a factory pattern to orchestrate
+ * multiple specialized services for metadata extraction, interface parsing, semantic
+ * analysis, and example generation.
+ * 
+ * ## Architecture
+ * 
+ * The ComponentParser follows the facade pattern, delegating all parsing operations
+ * to a ComponentParserFactory which coordinates specialized services:
+ * 
+ * - **Core Services**: MetadataExtractor, InterfaceParser, ComponentMatcher
+ * - **Analysis Services**: SemanticAnalyzer, PropertyClassifier, PurposeInference  
+ * - **Generation Services**: ExampleGenerator, ValueGenerator, CompositeDetector
+ * 
+ * ## Workflow
+ * 
+ * 1. **Input**: TypeScript .d.ts files containing VA component interfaces with JSDoc metadata
+ * 2. **Extraction**: Parse JSDoc annotations (@componentName, @maturityLevel, etc.) and TypeScript interfaces
+ * 3. **Analysis**: Classify properties, infer component purpose, determine content strategy
+ * 4. **Generation**: Create contextual usage examples based on semantic analysis
+ * 
+ * ## Usage Examples
+ * 
+ * ```typescript
+ * const parser = new ComponentParser();
+ * 
+ * // Parse component metadata from .d.ts content
+ * const components = parser.parseComponentMetadata(definitionFileContent);
+ * 
+ * // Find specific component with fuzzy matching
+ * const button = parser.findComponentByName("button", components);
+ * 
+ * // Generate usage examples
+ * const examples = parser.generateExamples(button);
+ * ```
+ * 
+ * @see ComponentParserFactory For service orchestration details
+ * @see MetadataExtractor For JSDoc parsing implementation
+ * @see ExampleGenerator For example generation strategies
+ */
 export class ComponentParser {
 	private factory: ComponentParserFactory;
 	private componentsCache: Map<string, ComponentData> = new Map();

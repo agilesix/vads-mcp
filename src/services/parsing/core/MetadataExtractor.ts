@@ -1,5 +1,11 @@
 import type { ComponentProperty } from "../../../types";
 
+/**
+ * ComponentBlock - Represents a parsed component definition block
+ * 
+ * Contains the extracted metadata and interface information for a single
+ * VA Design System component from TypeScript definition files.
+ */
 export interface ComponentBlock {
 	interfaceName: string;
 	interfaceBody: string;
@@ -11,6 +17,49 @@ export interface ComponentBlock {
 	tagName: string;
 }
 
+/**
+ * MetadataExtractor - Extracts component metadata from TypeScript definition files
+ * 
+ * This service parses TypeScript .d.ts files to extract component metadata from
+ * JSDoc comments and interface definitions. It uses regex-based parsing to identify
+ * component blocks and extract structured metadata.
+ * 
+ * ## Supported JSDoc Annotations
+ * 
+ * - `@componentName` - The display name of the component
+ * - `@maturityCategory` - Component maturity category (use, caution)
+ * - `@maturityLevel` - Component maturity level (best_practice, deployed, etc.)
+ * - `@guidanceHref` - Optional link to component guidance documentation
+ * - `@translations` - Supported translation keys
+ * 
+ * ## Input Format
+ * 
+ * Expected input format from VA Design System .d.ts files:
+ * 
+ * ```typescript
+ * /**
+ *  * @componentName Button
+ *  * @maturityCategory use
+ *  * @maturityLevel best_practice
+ *  * @guidanceHref /components/button
+ *  * @translations button.submit
+ *  *\/
+ * interface VaButton {
+ *   text: string;
+ *   disabled?: boolean;
+ * }
+ * ```
+ * 
+ * ## Output
+ * 
+ * Returns ComponentBlock objects containing:
+ * - Parsed metadata from JSDoc annotations
+ * - Interface name and body for property extraction
+ * - Generated tag name (va-{componentName})
+ * 
+ * @see ComponentBlock For the structure of extracted component data
+ * @see InterfaceParser For processing the interface body
+ */
 export class MetadataExtractor {
 	extractComponentBlocks(content: string): ComponentBlock[] {
 		const blocks: ComponentBlock[] = [];

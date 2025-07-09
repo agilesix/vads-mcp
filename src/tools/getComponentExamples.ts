@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolDefinition } from "../types";
+import { ExampleType } from "../types";
 
 const COMPONENT_DEFINITIONS_URL =
 	"https://raw.githubusercontent.com/department-of-veterans-affairs/component-library/refs/heads/main/packages/web-components/src/components.d.ts";
@@ -14,8 +15,8 @@ export const getComponentExamplesSchema = z.object({
 				"This should be the component name without the 'va-' prefix (e.g., use 'button' not 'va-button').",
 		),
 	exampleTypes: z
-		.array(z.enum(["basic", "state", "accessibility", "form", "all"]))
-		.default(["basic"])
+		.array(z.enum([ExampleType.BASIC, ExampleType.STATE, ExampleType.ACCESSIBILITY, ExampleType.FORM, "all"]))
+		.default([ExampleType.BASIC])
 		.describe(
 			"Types of examples to generate. Options: " +
 				"'basic' - Simple usage examples with essential properties, " +
@@ -96,7 +97,7 @@ export const getComponentExamplesTool: ToolDefinition = {
 
 			// Determine which example types to generate
 			const typesToGenerate = exampleTypes.includes("all")
-				? ["basic", "state", "accessibility", "form"]
+				? [ExampleType.BASIC, ExampleType.STATE, ExampleType.ACCESSIBILITY, ExampleType.FORM]
 				: exampleTypes;
 
 			// Generate examples using the component parser
@@ -107,14 +108,14 @@ export const getComponentExamplesTool: ToolDefinition = {
 
 			// Filter examples based on requested types
 			const filteredExamples = generatedExamples.filter((example: any) =>
-				typesToGenerate.includes(example.purpose || "basic"),
+				typesToGenerate.includes(example.purpose || ExampleType.BASIC),
 			);
 
 			// If no examples match the filter, include basic example
 			const examples =
 				filteredExamples.length > 0
 					? filteredExamples
-					: generatedExamples.filter((ex: any) => ex.purpose === "basic");
+					: generatedExamples.filter((ex: any) => ex.purpose === ExampleType.BASIC);
 
 			// Format the response
 			let response = `# ${component.name} Component Examples\n\n`;

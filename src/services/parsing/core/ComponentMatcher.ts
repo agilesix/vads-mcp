@@ -1,5 +1,48 @@
 import type { ComponentData } from "../../../types";
 
+/**
+ * ComponentMatcher - Handles component name matching and suggestions
+ * 
+ * This service provides intelligent component name matching with support for
+ * multiple naming conventions used in the VA Design System. It handles fuzzy
+ * matching, name normalization, and suggestion generation for component discovery.
+ * 
+ * ## Naming Convention Support
+ * 
+ * Supports multiple VA Design System naming patterns:
+ * - **Kebab-case**: `button-icon`, `alert-expandable`, `file-input-multiple`
+ * - **Space-separated**: `button icon`, `alert expandable`, `file input multiple`
+ * - **PascalCase**: `ButtonIcon`, `AlertExpandable`, `FileInputMultiple`
+ * - **Component names**: `Button`, `Alert`, `FileInput`
+ * 
+ * ## Matching Strategy
+ * 
+ * Uses intelligent matching algorithms:
+ * 1. **Exact Match**: Direct name matching across all conventions
+ * 2. **Normalized Match**: Convert inputs to consistent format for comparison
+ * 3. **Partial Match**: Match component name parts and variations
+ * 4. **Fuzzy Match**: Handle typos and similar names with scoring
+ * 
+ * ## Suggestion Generation
+ * 
+ * Provides helpful suggestions when exact matches aren't found:
+ * - Similar component names based on edit distance
+ * - Components with matching prefixes or suffixes
+ * - Components in the same category or with similar properties
+ * - Popular components that might be intended
+ * 
+ * ## Integration
+ * 
+ * Used by ComponentParser and tools for:
+ * - Finding components by name in getComponentProperties
+ * - Providing suggestions in listComponents
+ * - Handling user input variations in all tools
+ * - Supporting both exact and fuzzy component discovery
+ * 
+ * @see ComponentParser For the main interface using matching
+ * @see getComponentProperties For component lookup by name
+ * @see listComponents For component discovery and suggestions
+ */
 export class ComponentMatcher {
 	findComponentByName(
 		componentName: string,
