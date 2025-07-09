@@ -2,9 +2,19 @@ import { z } from "zod";
 import type { ToolDefinition } from "../types";
 import { ExampleType } from "../types";
 
+/**
+ * URL to the VA Design System component TypeScript definitions
+ * Used to fetch component metadata for intelligent example generation
+ */
 const COMPONENT_DEFINITIONS_URL =
 	"https://raw.githubusercontent.com/department-of-veterans-affairs/component-library/refs/heads/main/packages/web-components/src/components.d.ts";
 
+/**
+ * Zod schema for getComponentExamples tool parameters
+ * 
+ * Validates component name, example types, and output formatting options
+ * to ensure intelligent and useful example generation.
+ */
 export const getComponentExamplesSchema = z.object({
 	componentName: z
 		.string()
@@ -41,6 +51,51 @@ export const getComponentExamplesSchema = z.object({
 		),
 });
 
+/**
+ * Get Component Examples Tool - Generates intelligent usage examples for VA Design System components
+ * 
+ * This tool creates contextual, production-ready code examples for VA Design System components
+ * by analyzing their TypeScript definitions and inferring appropriate usage patterns.
+ * Examples are generated based on semantic analysis of component properties and purposes.
+ * 
+ * ## Intelligence Features
+ * 
+ * - **Semantic Analysis**: Understands component purpose (form, navigation, display, etc.)
+ * - **Contextual Values**: Generates realistic property values based on component type
+ * - **Multiple Example Types**: Basic usage, state variations, accessibility features, form integration
+ * - **Composite Components**: Special handling for complex components like radio groups
+ * - **Best Practices**: Examples follow VA Design System guidelines and patterns
+ * 
+ * ## Example Types
+ * 
+ * - **Basic**: Essential usage with required properties
+ * - **State**: Different component states (disabled, loading, error, etc.)
+ * - **Accessibility**: Enhanced accessibility features and ARIA attributes
+ * - **Form**: Integration within form contexts with validation
+ * 
+ * ## Use Cases
+ * 
+ * - **Learning**: Understand how to use new components
+ * - **Development**: Copy-paste examples for rapid prototyping
+ * - **Documentation**: Generate examples for component documentation
+ * - **Training**: Show best practices and common patterns
+ * 
+ * @example
+ * ```typescript
+ * // Generate basic button examples
+ * const buttonExamples = await getComponentExamples({
+ *   componentName: "button",
+ *   exampleTypes: ["basic", "state"]
+ * });
+ * 
+ * // Get comprehensive form input examples
+ * const inputExamples = await getComponentExamples({
+ *   componentName: "text-input",
+ *   exampleTypes: ["all"],
+ *   includeDescription: true
+ * });
+ * ```
+ */
 export const getComponentExamplesTool: ToolDefinition = {
 	name: "getComponentExamples",
 	schema: getComponentExamplesSchema,

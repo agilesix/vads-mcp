@@ -1,6 +1,12 @@
 import { z } from "zod";
 import type { ToolDefinition } from "../types";
 
+/**
+ * Zod schema for searchDesignSystem tool parameters
+ * 
+ * Validates and provides descriptions for all search parameters to ensure
+ * proper usage and helpful error messages for API consumers.
+ */
 export const searchDesignSystemSchema = z.object({
 	query: z
 		.string()
@@ -45,6 +51,51 @@ export const searchDesignSystemSchema = z.object({
 		),
 });
 
+/**
+ * Search Design System Tool - Semantic search through VA Design System documentation
+ * 
+ * This tool provides AI-powered search capabilities across the VA Design System
+ * documentation using Cloudflare's AutoRAG (Retrieval-Augmented Generation) service.
+ * It can answer questions about components, accessibility guidelines, design patterns,
+ * and implementation details.
+ * 
+ * ## How it works
+ * 
+ * 1. **Query Processing**: The search query is processed and optionally rewritten for better results
+ * 2. **Vector Search**: Documents are retrieved using semantic similarity (not just keyword matching)
+ * 3. **Ranking**: Results are ranked by relevance score and filtered by the threshold
+ * 4. **Response**: Matching document chunks are returned with metadata
+ * 
+ * ## Use Cases
+ * 
+ * - **Component Research**: "How do I implement form validation with va-text-input?"
+ * - **Accessibility Guidance**: "What ARIA attributes does the alert component support?"
+ * - **Design Patterns**: "When should I use cards vs. tiles for displaying content?"
+ * - **Best Practices**: "What are the recommended button sizes for mobile interfaces?"
+ * 
+ * ## Performance Tips
+ * 
+ * - Use specific queries for better results: "button disabled state" vs "button"
+ * - Adjust `maxResults` based on needs: 5-10 for quick answers, 20+ for research
+ * - Lower `scoreThreshold` for broader exploration, higher for precise answers
+ * 
+ * @example
+ * ```typescript
+ * // Search for button component documentation
+ * const result = await searchDesignSystem({
+ *   query: "How to style button variants",
+ *   maxResults: 10,
+ *   scoreThreshold: 0.5
+ * });
+ * 
+ * // Comprehensive accessibility research
+ * const accessibilityInfo = await searchDesignSystem({
+ *   query: "WCAG compliance requirements",
+ *   maxResults: 25,
+ *   scoreThreshold: 0.3
+ * });
+ * ```
+ */
 export const searchDesignSystemTool: ToolDefinition = {
 	name: "searchDesignSystem",
 	schema: searchDesignSystemSchema,
@@ -54,9 +105,10 @@ export const searchDesignSystemTool: ToolDefinition = {
 		_services?: any,
 	) => {
 		try {
+			// Execute semantic search using Cloudflare Workers AI AutoRAG
 			const results = await env.AI.autorag(autoragId).search({
 				query,
-				rewrite_query: true,
+				rewrite_query: true, // Let AI improve the query for better results
 				max_num_results: maxResults,
 				ranking_options: {
 					score_threshold: scoreThreshold,
@@ -64,6 +116,7 @@ export const searchDesignSystemTool: ToolDefinition = {
 			});
 
 			const resultCount = Array.isArray(results) ? results.length : "Unknown number of";
+			
 			return {
 				content: [
 					{
@@ -73,6 +126,7 @@ export const searchDesignSystemTool: ToolDefinition = {
 				],
 			};
 		} catch (error) {
+			// Provide detailed error information and troubleshooting guidance
 			return {
 				content: [
 					{
