@@ -259,9 +259,3 @@ For issues specific to this MCP server:
 5. Review Cursor's MCP documentation for general setup issues
 
 For VA Design System documentation questions, refer to the [official VA Design System resources](https://design.va.gov/about/developers).
-
----
-
-**Deployed Version**: 1.1.0  
-**Last Updated**: January 2025  
-**Maintained by**: AgileSix Team
