@@ -1,7 +1,8 @@
 import { searchDesignSystemTool } from "./searchDesignSystem";
-import { getComponentPropertiesTool } from "./getComponentProperties";
-import { getComponentExamplesTool } from "./getComponentExamples";
-import { listComponentsTool } from "./listComponents";
+// Temporarily disabled imports - keeping for future use
+// import { getComponentPropertiesTool } from "./getComponentProperties";
+// import { getComponentExamplesTool } from "./getComponentExamples";
+// import { listComponentsTool } from "./listComponents";
 import type { ToolDefinition } from "../types";
 
 /**
@@ -54,7 +55,8 @@ import type { ToolDefinition } from "../types";
  */
 export const tools: ToolDefinition[] = [
 	searchDesignSystemTool,
-	getComponentPropertiesTool,
-	getComponentExamplesTool,
-	listComponentsTool,
+	// Temporarily disabled - keeping code for future use
+	// getComponentPropertiesTool,
+	// getComponentExamplesTool,
+	// listComponentsTool,
 ];
