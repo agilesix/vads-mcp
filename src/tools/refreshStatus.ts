@@ -85,44 +85,42 @@ function calculateNextRefresh(lastRefresh: number): {
 /**
  * Refresh Status Tool
  *
- * Provides information about the last documentation refresh and when the next
- * manual refresh will be available. This tool helps users understand the current
- * state of the documentation index without triggering any changes.
+ * Shows when the R2 bucket was last updated with fresh documentation from GitHub.
+ * This indicates when new documentation content was synced, NOT when AutoRAG reindexed.
  *
  * ## What This Tool Shows
  *
- * - **Last Refresh Time**: When the last manual refresh was triggered
- * - **Time Since Refresh**: How long ago the last refresh occurred
- * - **Next Available Refresh**: When the next manual refresh can be triggered
- * - **Automatic Reindexing**: Reminder about AI Search's 6-hour auto-reindex
- * - **Dashboard Link**: Direct link to monitor indexing status
+ * - **Last R2 Bucket Update**: When documentation files were last synced from GitHub to R2
+ * - **Time Since Update**: How long ago the R2 bucket received new content
+ * - **Files Synced**: When documentation was last uploaded using sync-utility
+ *
+ * ## What This Tool Does NOT Show
+ *
+ * - AutoRAG reindexing status (AutoRAG automatically reindexes every 6 hours)
+ * - Individual file modification times
+ * - Git commit history
  *
  * ## Use Cases
  *
- * - Check if documentation is up-to-date
- * - Determine when you can trigger another refresh
- * - Verify that a previous refresh was recorded
- * - Monitor refresh history for troubleshooting
+ * - Check if R2 has the latest documentation from GitHub
+ * - Verify that sync-utility successfully updated R2
+ * - Monitor when documentation content was last refreshed
+ * - Track R2 bucket update history
  *
  * ## Non-Invasive Operation
  *
  * This tool only reads data from KV storage and does not:
- * - Trigger any refreshes or reindexing
+ * - Trigger any syncs or updates
  * - Modify any data
  * - Incur any costs beyond a single KV read operation
  *
  * @example
  * ```typescript
- * // Check status for default instance
+ * // Check R2 bucket update status
  * await refreshStatus({
  *   autoragId: "vads-rag-mcp"
  * });
- * // Returns: Status information with timestamps and availability
- *
- * // Check status for custom instance
- * await refreshStatus({
- *   autoragId: "custom-rag-instance"
- * });
+ * // Returns: When R2 bucket was last updated with documentation
  * ```
  */
 export const refreshStatusTool: ToolDefinition = {
@@ -140,7 +138,7 @@ export const refreshStatusTool: ToolDefinition = {
 					content: [
 						{
 							type: "text" as const,
-							text: `**📊 Refresh Status: ${autoragId}**\n\n**Last Manual Refresh:** Never\n\nNo manual refresh has been recorded for this AutoRAG instance.\n\n## What This Means\n\n- The documentation is using initial data or auto-synced content\n- AI Search automatically reindexes data every **6 hours**\n- Manual refreshes must be performed by administrators using the sync-utility\n\n## Automatic Reindexing\n\nAI Search (AutoRAG) automatically detects changes in your R2 bucket and reindexes:\n- **Frequency**: Every 6 hours\n- **Detection**: Automatic when files change in R2\n- **No action needed**: System handles updates automatically\n\n**Dashboard:** https://dash.cloudflare.com/?to=/:account/ai/ai-search`,
+							text: `**📊 R2 Bucket Status: ${autoragId}**\n\n**Last R2 Update:** Never\n\nNo R2 bucket update has been recorded.\n\n## What This Means\n\n- The R2 bucket may contain initial/seed data\n- Documentation has not been synced from GitHub using sync-utility\n- To update R2 with latest docs, run: \`cd sync-utility && npm run sync\`\n\n## Important\n\n- **R2 Updates**: Manual sync using sync-utility uploads fresh docs from GitHub\n- **AutoRAG Indexing**: Happens automatically every 6 hours (separate from R2 updates)\n- This tool tracks R2 bucket updates, NOT AutoRAG reindexing\n\n**To update R2 bucket:** Run sync-utility to fetch latest docs from GitHub\n**Dashboard:** https://dash.cloudflare.com/?to=/:account/r2`,
 						},
 					],
 				};
@@ -158,25 +156,27 @@ export const refreshStatusTool: ToolDefinition = {
 			const timeSinceFormatted = formatDuration(timeSinceRefresh);
 
 			// Build status message
-			let statusMessage = `**📊 Refresh Status: ${autoragId}**\n\n`;
-			statusMessage += `**Last Manual Refresh:**\n`;
+			let statusMessage = `**📊 R2 Bucket Status: ${autoragId}**\n\n`;
+			statusMessage += `**Last R2 Update (Documentation Sync):**\n`;
 			statusMessage += `- **Time:** ${lastRefreshReadable}\n`;
 			statusMessage += `- **ISO:** ${lastRefreshISO}\n`;
 			statusMessage += `- **Ago:** ${timeSinceFormatted} ago\n\n`;
 
-			// Automatic reindexing reminder
-			statusMessage += `## Automatic Reindexing\n\n`;
-			statusMessage += `AI Search (AutoRAG) automatically reindexes your data:\n`;
-			statusMessage += `- **Frequency**: Every 6 hours\n`;
-			statusMessage += `- **Last manual refresh**: ${timeSinceFormatted} ago\n`;
-			statusMessage += `- **Auto-reindex intervals**: Likely ${Math.floor(timeSinceRefresh / (6 * 60 * 60 * 1000))} auto-reindex cycles since last manual refresh\n\n`;
-			statusMessage += `Most documentation updates are handled automatically without manual intervention.\n\n`;
+			statusMessage += `This timestamp shows when the R2 bucket was last updated with fresh documentation from the GitHub repository using sync-utility.\n\n`;
 
-			// Dashboard link
-			statusMessage += `## Monitor Indexing\n\n`;
-			statusMessage += `Track current indexing status and history:\n`;
-			statusMessage += `**Dashboard:** https://dash.cloudflare.com/?to=/:account/ai/ai-search\n\n`;
-			statusMessage += `Navigate to your AI Search instance and check the "Jobs" tab for real-time indexing status.`;
+			// AutoRAG indexing info
+			statusMessage += `## AutoRAG Indexing (Separate Process)\n\n`;
+			statusMessage += `After R2 updates, AutoRAG automatically reindexes:\n`;
+			statusMessage += `- **AutoRAG Frequency**: Every 6 hours (automatic)\n`;
+			statusMessage += `- **R2 last updated**: ${timeSinceFormatted} ago\n`;
+			statusMessage += `- **Estimated reindex cycles**: ~${Math.floor(timeSinceRefresh / (6 * 60 * 60 * 1000))} times since last R2 update\n\n`;
+			statusMessage += `**Note:** AutoRAG indexing happens automatically. This tool tracks when R2 bucket receives new documentation content.\n\n`;
+
+			// Dashboard links
+			statusMessage += `## Dashboards\n\n`;
+			statusMessage += `- **R2 Bucket:** https://dash.cloudflare.com/?to=/:account/r2\n`;
+			statusMessage += `- **AutoRAG Indexing:** https://dash.cloudflare.com/?to=/:account/ai/ai-search\n\n`;
+			statusMessage += `**To update R2:** Run \`cd sync-utility && npm run sync\` to fetch latest docs from GitHub.`;
 
 			return {
 				content: [
@@ -191,7 +191,7 @@ export const refreshStatusTool: ToolDefinition = {
 				content: [
 					{
 						type: "text" as const,
-						text: `**Error checking refresh status:**\n\n${error instanceof Error ? error.message : String(error)}\n\n**Troubleshooting:**\n- Verify the AutoRAG instance "${autoragId}" exists and is accessible\n- Check KV namespace "REFRESH_TRACKER" is properly configured\n- Ensure you have proper permissions to read from KV\n- Check Cloudflare dashboard for any service issues\n\n**Dashboard:** https://dash.cloudflare.com/?to=/:account/ai/ai-search`,
+						text: `**Error checking R2 bucket status:**\n\n${error instanceof Error ? error.message : String(error)}\n\n**Troubleshooting:**\n- Verify the identifier "${autoragId}" is correct\n- Check KV namespace "REFRESH_TRACKER" is properly configured in wrangler.jsonc\n- Ensure you have proper permissions to read from KV\n- Check Cloudflare dashboard for any service issues\n\n**Dashboards:**\n- R2: https://dash.cloudflare.com/?to=/:account/r2\n- KV: https://dash.cloudflare.com/?to=/:account/workers/kv/namespaces`,
 					},
 				],
 			};

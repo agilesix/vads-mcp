@@ -1,8 +1,9 @@
 /**
  * Wrangler configuration for VA Docs Sync Utility
  *
- * This utility uses the same R2 bucket as the main MCP server.
- * It only needs R2 access to upload markdown files.
+ * This utility uses the same R2 bucket and KV namespace as the main MCP server.
+ * - R2: To upload markdown files
+ * - KV: To record sync timestamps for refreshStatus tool
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
@@ -13,6 +14,13 @@
 		{
 			"binding": "VADS_DOCS",
 			"bucket_name": "vads-docs"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "REFRESH_TRACKER",
+			"id": "680e786a6dda42b3a41ed48ae74edb0d",
+			"preview_id": "9cfd112f8d534d80b4af49edfc8f97a2"
 		}
 	]
 }
