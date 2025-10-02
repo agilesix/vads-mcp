@@ -17,6 +17,7 @@ import { cloneOrPullRepo } from './lib/git-clone.js';
 import { findMarkdownFiles, calculateTotalSize } from './lib/markdown-finder.js';
 import { uploadToR2, verifyWranglerSetup } from './lib/r2-uploader.js';
 import { createLogger } from './lib/logger.js';
+import { recordSyncTimestamp } from './lib/kv-tracker.js';
 
 /**
  * Main entry point for the sync utility
@@ -129,6 +130,20 @@ async function main(): Promise<void> {
 
 		// Calculate duration
 		stats.duration = Date.now() - startTime;
+
+		// Step 4: Record sync timestamp (only on successful sync, not dry run)
+		if (!options.dryRun && stats.failed === 0) {
+			logger.step(4, 'Recording sync timestamp...');
+			const kvResult = await recordSyncTimestamp();
+
+			if (kvResult.success) {
+				logger.success('Timestamp recorded in KV');
+			} else {
+				logger.warn(`Failed to record timestamp: ${kvResult.error}`);
+				logger.info('Sync completed successfully, but refreshStatus tool may show outdated time');
+			}
+			console.log('');
+		}
 
 		// Display results
 		displayResults(stats, options.dryRun, logger);
