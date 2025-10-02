@@ -1,4 +1,5 @@
 import { searchDesignSystemTool } from "./searchDesignSystem";
+import { refreshStatusTool } from "./refreshStatus";
 // Temporarily disabled imports - keeping for future use
 // import { getComponentPropertiesTool } from "./getComponentProperties";
 // import { getComponentExamplesTool } from "./getComponentExamples";
@@ -17,15 +18,20 @@ import type { ToolDefinition } from "../types";
  * ### 🔍 searchDesignSystem
  * Semantic search through VA Design System documentation using AutoRAG.
  * Best for: finding documentation, guidelines, and best practices.
- * 
- * ### 📋 getComponentProperties  
+ *
+ * ### 📊 refreshStatus
+ * Checks the last documentation refresh time.
+ * Best for: monitoring when the documentation index was last updated.
+ * Note: Read-only operation with no costs or side effects.
+ *
+ * ### 📋 getComponentProperties
  * Extracts detailed property information from component TypeScript definitions.
  * Best for: understanding component APIs and implementation requirements.
- * 
+ *
  * ### 💡 getComponentExamples
  * Generates contextual usage examples based on component analysis.
  * Best for: learning component usage patterns and implementation examples.
- * 
+ *
  * ### 📂 listComponents
  * Lists all available components with status and maturity information.
  * Best for: discovering components and understanding their recommendation status.
@@ -55,6 +61,7 @@ import type { ToolDefinition } from "../types";
  */
 export const tools: ToolDefinition[] = [
 	searchDesignSystemTool,
+	refreshStatusTool,
 	// Temporarily disabled - keeping code for future use
 	// getComponentPropertiesTool,
 	// getComponentExamplesTool,

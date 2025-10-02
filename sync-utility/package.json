@@ -1,0 +1,24 @@
+{
+	"name": "vads-docs-sync",
+	"version": "1.0.0",
+	"description": "Utility to sync VA Design System markdown documentation to Cloudflare R2",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"sync": "tsx src/sync-docs.ts",
+		"sync:dry-run": "tsx src/sync-docs.ts --dry-run",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"simple-git": "^3.27.0",
+		"glob": "^11.0.0",
+		"chalk": "^5.4.1"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250110.0",
+		"@types/node": "^22.10.5",
+		"tsx": "^4.19.2",
+		"typescript": "^5.8.3",
+		"wrangler": "^4.16.1"
+	}
+}

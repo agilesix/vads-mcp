@@ -29,6 +29,13 @@
 			"bucket_name": "vads-docs"
 		}
 	],
+	"kv_namespaces": [
+		{
+			"binding": "REFRESH_TRACKER",
+			"id": "680e786a6dda42b3a41ed48ae74edb0d",
+			"preview_id": "9cfd112f8d534d80b4af49edfc8f97a2"
+		}
+	],
 	"ai": {
 		"binding": "AI"
 	},
