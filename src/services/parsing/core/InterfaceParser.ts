@@ -66,7 +66,7 @@ export class InterfaceParser {
 			}
 
 			if (trimmedLine.startsWith("/**") || trimmedLine.startsWith("*")) {
-				let cleanLine = trimmedLine.replace(/^\/\*\*\s*/, '').replace(/\s*\*\/$/, '').replace(/^\*\s*/, '');
+				const cleanLine = trimmedLine.replace(/^\/\*\*\s*/, '').replace(/\s*\*\/$/, '').replace(/^\*\s*/, '');
 				if (cleanLine) {
 					currentComment += cleanLine + " ";
 				}

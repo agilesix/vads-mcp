@@ -5,6 +5,7 @@ declare namespace Cloudflare {
 	interface Env {
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").MyMCP>;
 		VADS_DOCS: R2Bucket;
+		REFRESH_TRACKER: KVNamespace;
 		AI: Ai;
 	}
 }

@@ -1,0 +1,29 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+
+# Cloned repositories
+repos/
+vets-design-system-documentation/
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
